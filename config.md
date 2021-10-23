@@ -4,7 +4,6 @@ Add here global page variables to use throughout your website.
 +++
 author = "David Bach"
 mintoclevel = 2
-prepath = ""
 
 # Add here files or directories that should be ignored by Franklin, otherwise
 # these files might be copied and, if markdown, processed by Franklin which
