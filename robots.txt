@@ -1,0 +1,4 @@
+Sitemap: https://david-bach.com/sitemap.xml
+
+User-agent: *
+Disallow:
