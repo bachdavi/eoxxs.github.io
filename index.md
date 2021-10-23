@@ -16,8 +16,7 @@ I am interested in functional-relational programming,
 neuroinformatics, and quantum information theory. In my free time I
 listen to vinyls, make music or dabble in analog photography.
 
-I worked professionally with Rust, Clojure, Julia and JavaScript, and
-a little C and Python here and there.
+I worked professionally with Rust, Clojure, Julia and JavaScript.
 
 You can reach me over on [github](https://github.com/eoxxs) or
 [twitter](https://twitter.com/bachdavi).
