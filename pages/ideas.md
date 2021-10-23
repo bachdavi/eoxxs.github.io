@@ -1,0 +1,13 @@
+@def title = "Ideas"
+
+# Ideas
+\post{/pages/posts/2019-07-06-Incremental-Functional-Aggregate-Queries/index.html}{06 Jul 2019: Incremental Functional Aggregate Queries}
+
+\post{/pages/posts/2018-11-25-reactive-datalog-with-vega/index.html}{25 Nov 2018: Reactive Datalog with Vega}
+
+
+
+
+
+
+
