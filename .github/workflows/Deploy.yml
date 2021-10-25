@@ -34,9 +34,9 @@ jobs:
     #   specific arguments, see the documentation or ?optimize in the REPL.
     - run: julia -e '
             using Pkg; Pkg.activate("."); Pkg.instantiate();
-            using NodeJS; run(`$(npm_cmd()) install -g highlight.js`);
+            using NodeJS; run(`$(npm_cmd()) install highlight.js`);
             using Franklin;
-            optimize(minify=false)'
+            optimize()'
     - name: Build and Deploy
       uses: JamesIves/github-pages-deploy-action@releases/v3
       with:
