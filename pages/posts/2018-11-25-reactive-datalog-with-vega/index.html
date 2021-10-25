@@ -1,68 +1,27 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    
-     <link rel="stylesheet" href="/libs/highlight/github.min.css">
-   
-    <link rel="stylesheet" href="/css/franklin.css">
-<link rel="stylesheet" href="/css/tufte.css">
-<link rel="stylesheet" href="/css/latex.css">
-<link rel="stylesheet" href="/css/adjust.css"> <!-- sheet to overwrite some clashing styles -->
-<link rel="icon" href="/assets/favicon.png">
-
-     <title>Reactive Datalog with Vega</title>  
-</head>
-
-<body>
-<h2 class="blog-name" style="font-style: normal;">David Bach</h2>
-<div id="layout">
-  <div id="menu">
-    <ul>
-      <li><a href="/">About</a></li>
-      <li><a href="/pages/ideas/index.html">Ideas</a></li>
-      <li><a href="/pages/talks/index.html">Talks</a></li>
-    </ul>
-  </div>
-  <div id="main">
-
-
-
-<!-- Content appended here -->
-<div class="franklin-content"><h1 id="reactive_datalog_with_vega"><a href="#reactive_datalog_with_vega" class="header-anchor">Reactive Datalog with Vega</a></h1>
-<p>Reactive Datalog?</p>
-<p>Yes exactly&#33; We are working on a system, dubbed <strong>3DF</strong> for <em>Declarative Differential Dataflow</em> <sup id="fnref:1"><a href="#fndef:1" class="fnref">[1]</a></sup> , that has the ability to compile Datalog queries into Differential Dataflows.</p>
-<p>Differential Dataflow <sup id="fnref:2"><a href="#fndef:2" class="fnref">[2]</a></sup> data-parallel programming framework designed to efficiently process large volumes of data and to quickly respond to arbitrary changes in input collections&quot;. It is written and maintained by Frank McSherry.</p>
-<p>A unique property of this framework is its ability to incrementally update the state of various operators &#40;think <code>join</code>, <code>group</code>, ...&#41;. In other words: A Differential Dataflow is a computation that reacts to incoming changes in a smart and efficient way and propagates any new information correctly. There is quite a lot to it and we defer to <a href="http://frankmcsherry.org/">Frank&#39;s blog</a> for a trove of information on Differential itself.</p>
-<p>The system consists of a server written in Rust that takes commands via WebSocket and internally constructs the appropriate dataflows. We&#39;ve build a client that can compile Datalog queries into query plans that the backend understands.</p>
-<p>To clarify, here is a small example: We are interested in all people with a certain name and a certain age. As a Datalog query that may look like this:</p>
-<pre><code class="language-clojure">&#91;:find ?name ?age
+<!doctype html> <html lang=en > <meta charset=UTF-8 > <meta name=viewport  content="width=device-width, initial-scale=1"> <link rel=stylesheet  href="/libs/highlight/github.min.css"> <link rel=stylesheet  href="/css/franklin.css"> <link rel=stylesheet  href="/css/tufte.css"> <link rel=stylesheet  href="/css/latex.css"> <link rel=stylesheet  href="/css/adjust.css"> <link rel=icon  href="/assets/favicon.png"> <title>Reactive Datalog with Vega</title> <h2 class=blog-name  style="font-style: normal;">David Bach</h2> <div id=layout > <div id=menu > <ul> <li><a href="/">About</a> <li><a href="/pages/ideas/index.html">Ideas</a> <li><a href="/pages/talks/index.html">Talks</a> </ul> </div> <div id=main > <div class=franklin-content ><h1 id=reactive_datalog_with_vega ><a href="#reactive_datalog_with_vega" class=header-anchor >Reactive Datalog with Vega</a></h1> <p>Reactive Datalog?</p> <p>Yes exactly&#33; We are working on a system, dubbed <strong>3DF</strong> for <em>Declarative Differential Dataflow</em> <sup id="fnref:1"><a href="#fndef:1" class=fnref >[1]</a></sup> , that has the ability to compile Datalog queries into Differential Dataflows.</p> <p>Differential Dataflow <sup id="fnref:2"><a href="#fndef:2" class=fnref >[2]</a></sup> data-parallel programming framework designed to efficiently process large volumes of data and to quickly respond to arbitrary changes in input collections&quot;. It is written and maintained by Frank McSherry.</p> <p>A unique property of this framework is its ability to incrementally update the state of various operators &#40;think <code>join</code>, <code>group</code>, ...&#41;. In other words: A Differential Dataflow is a computation that reacts to incoming changes in a smart and efficient way and propagates any new information correctly. There is quite a lot to it and we defer to <a href="http://frankmcsherry.org/">Frank&#39;s blog</a> for a trove of information on Differential itself.</p> <p>The system consists of a server written in Rust that takes commands via WebSocket and internally constructs the appropriate dataflows. We&#39;ve build a client that can compile Datalog queries into query plans that the backend understands.</p> <p>To clarify, here is a small example: We are interested in all people with a certain name and a certain age. As a Datalog query that may look like this:</p> <pre><code class=language-clojure >&#91;:find ?name ?age
  :where
  &#91;?e :name ?name&#93;
  &#91;?e :age ?age&#93;
- &#91;&#40;&gt; ?age 18&#41;&#93;&#93;</code></pre>
-<p>Now we input some new information &#40;In general that may come from some file, a stream, kafka, datomic, ... you name it&#41;:</p>
-<pre><code class="language-clojure">&#123;:name &quot;Mabel&quot; :age 19&#125;</code></pre>
+ &#91;&#40;&gt; ?age 18&#41;&#93;&#93;</code></pre> <p>Now we input some new information &#40;In general that may come from some file, a stream, kafka, datomic, ... you name it&#41;:</p> <pre><code class=language-clojure >&#123;:name &quot;Mabel&quot; :age 19&#125;</code></pre>
 <p>3DF will update us promptly &#40;For how see below&#41;:</p>
-<pre><code class="language-clojure">&#91;&#91;&#91;&quot;Mabel&quot; 19&#93; 1&#93;&#93;</code></pre>
+<pre><code class=language-clojure >&#91;&#91;&#91;&quot;Mabel&quot; 19&#93; 1&#93;&#93;</code></pre>
 <p>It tells us that there is new information in the result set of our query. The tuple consisting of <code>&quot;Mabel&quot; 19</code>is the result of our query and the <code>1</code>is the difference. That means this information is added.</p>
 <p>Maybe we realized, that we made a typo and we retract the first information and add a new one: <code>:name &quot;Mabel :age 21&quot;</code>. 3DF will promptly tell us</p>
-<pre><code class="language-clojure">&#91;&#91;&#91;&quot;Mabel&quot; 19&#93; -1&#93; &#91;&#91;&quot;Mabel&quot; 21&#93; 1&#93;&#93;</code></pre>
+<pre><code class=language-clojure >&#91;&#91;&#91;&quot;Mabel&quot; 19&#93; -1&#93; &#91;&#91;&quot;Mabel&quot; 21&#93; 1&#93;&#93;</code></pre>
 <p>indicating that now there are new facts in the system. The person with name &quot;Mabel&quot; is not 19 but actually 21. This represents a fact, a statement about our world that is true at a given point in time. Given such differences, Differential Dataflow will only do work proportional to the change itself.</p>
 <p>Having 3DF keep track of our changes, we can start looking at ClojureScript and Vega.</p>
-<h2 id="communication"><a href="#communication" class="header-anchor">Communication</a></h2>
+<h2 id=communication ><a href="#communication" class=header-anchor >Communication</a></h2>
 <p>3DF exposes a WebSocket connection over which we can register new Datalog expressions, manage input parameters, send data, and receive updates to our queries, as new data arrives in the system.</p>
-<p>Any further communication is build around Clojure&#39;s amazing async library. The client code <sup id="fnref:3"><a href="#fndef:3" class="fnref">[3]</a></sup> is available for both Clojure &amp; ClojureScript. When connecting to the server, we get a single connection handle:</p>
-<pre><code class="language-clojure">&#40;def conn &#40;create-conn &quot;ws://127.0.0.1:6262&quot;&#41;&#41;</code></pre>
+<p>Any further communication is build around Clojure&#39;s amazing async library. The client code <sup id="fnref:3"><a href="#fndef:3" class=fnref >[3]</a></sup> is available for both Clojure &amp; ClojureScript. When connecting to the server, we get a single connection handle:</p>
+<pre><code class=language-clojure >&#40;def conn &#40;create-conn &quot;ws://127.0.0.1:6262&quot;&#41;&#41;</code></pre>
 <p>It contains one async channel were all outputs are put and one sink to which we can write commands.  As we likely will be running more than one query, we want dedicated subscribers for every one of them. For that purpose we use pub/sub from the async library.  We partition our results by the name of the query.</p>
 <p>A registration will look like the following, with the former query:</p>
-<pre><code class="language-clojure">&#40;exec&#33; conn &#40;register-query &quot;people-over-18&quot; query&#41;&#41;</code></pre>
+<pre><code class=language-clojure >&#40;exec&#33; conn &#40;register-query &quot;people-over-18&quot; query&#41;&#41;</code></pre>
 <p>Here <code>people-over-18</code> is our globally named relation and <code>exec&#33;</code> is a macro that will serialize the output from <code>register-query</code> and write it into the WebSocket.</p>
-<h2 id="vega"><a href="#vega" class="header-anchor">Vega</a></h2>
+<h2 id=vega ><a href="#vega" class=header-anchor >Vega</a></h2>
 <p>Alright. Communication is sorted and we have 3DF running. Now a short look at Vega.</p>
-<p>Vega is high-level grammar for visualizations <sup id="fnref:4"><a href="#fndef:4" class="fnref">[4]</a></sup>. That means we describe, in a declarative manner, what we want Vega to visualize. Here is an example specification <sup id="fnref:5"><a href="#fndef:5" class="fnref">[5]</a></sup> for a bar chart with x values taken from the <code>hour</code> field and y values from <code>sum_passenger</code>:</p>
-<pre><code class="language-clojure">&#123;:data     &#123;:name &quot;passenger&quot;&#125;
+<p>Vega is high-level grammar for visualizations <sup id="fnref:4"><a href="#fndef:4" class=fnref >[4]</a></sup>. That means we describe, in a declarative manner, what we want Vega to visualize. Here is an example specification <sup id="fnref:5"><a href="#fndef:5" class=fnref >[5]</a></sup> for a bar chart with x values taken from the <code>hour</code> field and y values from <code>sum_passenger</code>:</p>
+<pre><code class=language-clojure >&#123;:data     &#123;:name &quot;passenger&quot;&#125;
  :width    1000
  :heigt    1500
  :mark     &quot;bar&quot;
@@ -74,7 +33,7 @@
                 :title &quot;# passengers&quot;&#125;&#125;&#125;</code></pre>
 <p>In contrast to normal Vega specs, we do not specify any data. We will stream it&#33;</p>
 <p>Vega offers an <code>embed</code> functionality, which can run arbitrary JavaScript in its callbacks. Well thats exactly the place we will put our communication logic to get new results.</p>
-<pre><code class="language-clojure">&#40;go-loop &#91;&#93; 
+<pre><code class=language-clojure >&#40;go-loop &#91;&#93; 
   &#40;when-let &#91;&#91;_ results&#93; &#40;&#33;&lt; source&#41;&#93;
     &#40;.. res -view
       &#40;change data-name
@@ -84,11 +43,11 @@
     &#40;run&#41;&#41;
   &#40;recur&#41;&#41;&#41;</code></pre>
 <p>As soon as some data arrives in the channel, we take it, process it and call two Vega methods.  We create a <code>changeset</code> via the <code>change</code> method, expressing what changes Vega should visualize. The <code>insert</code> takes a vector of tuples indicating new data to insert and the <code>remove</code> takes a function, which will be called on the existing data tuples and returns <code>true</code> for all that are supposed to be removed.</p>
-<p>In the end we call <code>run</code> which will execute and render the changes. More on that can be read here <sup id="fnref:6"><a href="#fndef:6" class="fnref">[6]</a></sup>. Finally we call the <code>embed</code> method and mount into the DOM.</p>
-<h2 id="running_analytics"><a href="#running_analytics" class="header-anchor">Running Analytics</a></h2>
-<p>Our data set is the publicly available data of NYC cab rides <sup id="fnref:7"><a href="#fndef:7" class="fnref">[7]</a></sup>.  The dataset contains one single day, these are around 9.000.000 lines of uncompressed csv with a size of 800 MB. We are running 3DF in one thread on my MBP.</p>
+<p>In the end we call <code>run</code> which will execute and render the changes. More on that can be read here <sup id="fnref:6"><a href="#fndef:6" class=fnref >[6]</a></sup>. Finally we call the <code>embed</code> method and mount into the DOM.</p>
+<h2 id=running_analytics ><a href="#running_analytics" class=header-anchor >Running Analytics</a></h2>
+<p>Our data set is the publicly available data of NYC cab rides <sup id="fnref:7"><a href="#fndef:7" class=fnref >[7]</a></sup>.  The dataset contains one single day, these are around 9.000.000 lines of uncompressed csv with a size of 800 MB. We are running 3DF in one thread on my MBP.</p>
 <p>Every line describes one cab ride with the following attributes: <code>VendorID</code>, <code>pickup_time</code>, <code>passenger_count</code>, <code>trip_distance</code>. The remaining ones are omitted, as we are not using them. We will simulate streaming this data at 1024 lines per batch.</p>
-<pre><code class="language-clojure">&#40;exec&#33; conn
+<pre><code class=language-clojure >&#40;exec&#33; conn
     &#40;register-source
      &#91;:cab/vendor :cab/hour :cab/passenger :cab/distance&#93;
      &#123;:CsvFile &#123;:path      &quot;DATA_PATH&quot;
@@ -96,7 +55,7 @@
                 :schema    &#91;&#91;0 &#123;:Number 0&#125;&#93;&#91;1 &#123;:Number 0&#125;&#93; &#91;3 &#123;:Number 0&#125;&#93; &#91;4 &#123;:Number 0&#125;&#93;&#93;&#125;&#125;&#41;&#41;</code></pre>
 <p>Columns from this dataset will always have the namespace <code>cab/</code> such that we can distinguish them from different sources. The reading of the whole dataset takes around 70 seconds with a batch size of 1024 lines. That is quite long, compared to 25 seconds when we do not batch them with that high of a granularity. That is because we increment the logical timestamp every 1024 lines, causing Differential to do a lot more progress tracking work.</p>
 <p>The first thing we look at is quite simple: <em>Number of transported people per hour</em>. Here is the Datalog query:</p>
-<pre><code class="language-clojure">&#40;def passenger
+<pre><code class=language-clojure >&#40;def passenger
   &quot;Number of transported people per hour&quot;
   &#39;&#91;:find ?hour &#40;sum ?passenger&#41;
     :with ?e
@@ -107,19 +66,19 @@
 <p>You&#39;ll only see parts of the whole day. 3DF will update us with a quite high frequency. Every update consists of values to be removed and values to be added.</p>
 <p><a href="/assets/pages/2018-11-25-reactive-datalog-with-vega/passengers.gif">Passenger.gif</a></p>
 <p>On the x-axis you see the different hours and the y-axis represent the number of transported passengers. You can see how neatly those bars are growing.</p>
-<h2 id="interactive_queries"><a href="#interactive_queries" class="header-anchor">Interactive Queries</a></h2>
+<h2 id=interactive_queries ><a href="#interactive_queries" class=header-anchor >Interactive Queries</a></h2>
 <p>Well that has been nice and fun. We can stream results of our computations into Vega and get updated visualizations whenever the result set of our query changes. But this is just the beginning. How about creating an interactive visualization just with 3DF?</p>
 <p>For this we will create a new query with an interactive input, allowing our users to see results for specific hours of the day. We will be looking at a query that asks for the number of rides aggregated by trip distance, with all distances rounded to integers.</p>
-<pre><code class="language-clojure">&#40;def distance-distribution
+<pre><code class=language-clojure >&#40;def distance-distribution
   &quot;Aggregate number of rides for a given distance&quot;
   &#39;&#91;:find ?distance &#40;count ?e&#41;
     :where
     &#91;?e :cab/distance ?distance&#93;
     &#91;?e :cab/hour ?hour&#93;&#93;&#41; ; &lt;- we want to control this</code></pre>
 <p>We introduce a new interactive input called <code>:filter/hour</code>.</p>
-<pre><code class="language-clojure">&#40;exec&#33; conn &#40;create-input :filter/hour&#41;&#41;</code></pre>
+<pre><code class=language-clojure >&#40;exec&#33; conn &#40;create-input :filter/hour&#41;&#41;</code></pre>
 <p>Now we have to adapt the query to make use of this new input. For that we bind input values to the symbol <code>?hour</code> and then join them with the <code>:cab/hour</code>. This ends up looking like the following:</p>
-<pre><code class="language-clojure">&#40;def distance-distribution
+<pre><code class=language-clojure >&#40;def distance-distribution
   &quot;Aggregate number of rides for a given distance&quot;
   &#39;&#91;:find ?distance &#40;count ?e&#41;
     :where
@@ -129,11 +88,11 @@
 <p>Now we can start transacting into that input and observe changes to our visualization. In Emacs on the right, we update the hour input.</p>
 <p><a href="/assets/pages/2018-11-25-reactive-datalog-with-vega/interactive_2.gif">Interactivity.gif</a></p>
 <p>We start with the distribution at 9pm, move on to 3am, 6pm, and finally to 11pm. You could also add several different hours to see the distribution for all of them combined. Every addition into <code>:filter/hour</code> input leads the <code>?hour</code>-join in the <code>distance-distribution</code> query to match all those rows that have the respective <code>:cab/hour</code> value. Retractions work the same but with negative differences and as such lead to data being removed.</p>
-<h2 id="embrace_the_change"><a href="#embrace_the_change" class="header-anchor">Embrace The Change</a></h2>
+<h2 id=embrace_the_change ><a href="#embrace_the_change" class=header-anchor >Embrace The Change</a></h2>
 <p>After spending all day building this wonderful dashboard and computing all these aggregates your boss storms into your office. He informs you that one of the vendors has retracted their data usage consent. We need to remove all of their information asap.</p>
 <p>3DF to the rescue. We have a system that is designed to propagate changes efficiently. So lets see how we can solve this.</p>
 <p>We&#39;ll assume that we have a separate database containing information about the different vendors. Every line in our analytics files contains an id, uniquely identifying these vendors. In our query we would match on these ids, in order to incorporate information from the vendor database </p>
-<pre><code class="language-clojure">&#40;def passenger
+<pre><code class=language-clojure >&#40;def passenger
   &quot;Number of transported people per hour&quot;
   &#39;&#91;:find ?hour &#40;sum ?passenger&#41;
     :with ?e
@@ -143,65 +102,61 @@
     &#91;?e :cab/vendor ?id&#93;
     &#91;_  :vendor/id ?id&#93;&#93;&#41;</code></pre>
 <p>Now observe what happens to our results as we remove this one vendor from the vendor database.</p>
-<pre><code class="language-clojure">&#40;exec&#33; conn &#40;transact db &#91;&#91;:db/retract :vendor/id 1&#93;&#93;&#41;&#41;</code></pre>
+<pre><code class=language-clojure >&#40;exec&#33; conn &#40;transact db &#91;&#91;:db/retract :vendor/id 1&#93;&#93;&#41;&#41;</code></pre>
 <p><a href="/assets/pages/2018-11-25-reactive-datalog-with-vega/gdpr_1.gif">Number of passenger.gif</a>, <a href="/assets/pages/2018-11-25-reactive-datalog-with-vega/gdpr_2.gif">Distribution of distances.gif</a></p>
 <p>You see how all the values drop down as we remove the vendor. This one retraction led to a change touching more than half of all cab rides and these changes are propagated through all dataflows.</p>
 <p>All our results got updated without us changing our queries or filtering the input dataset. It&#39;s also important to note that we didn&#39;t have to re-run our computations from scratch, as we can still use the data from all other vendors. 3DF efficiently computed just the differences.</p>
 <p>Imagine we had been feeding these results into even more computations, such as price forecasting, movement analytics, or predicting traffic bottlenecks. All those downstream computations might&#39;ve also used information affected by this retraction, and would now be updated accordingly and in an efficient manner.</p>
 <p>Well this has been a lot of fun. Hopefully you&#39;ve made it through this lengthy piece. Next time we will take a deeper dive into the performance characteristics of working with changes, run computations in a distributed setting, and see how 3DF performs at scale.</p>
 <p>Until then cheers and goodbye.</p>
-<h2 id="resources"><a href="#resources" class="header-anchor">Resources</a></h2>
-<p><table class="fndef" id="fndef:1">
+<h2 id=resources ><a href="#resources" class=header-anchor >Resources</a></h2>
+<p><table class=fndef  id="fndef:1">
     <tr>
-        <td class="fndef-backref"><a href="#fnref:1">[1]</a></td>
-        <td class="fndef-content"><a href="https://github.com/comnik/declarative-dataflow">3DF</a></td>
-    </tr>
+        <td class=fndef-backref ><a href="#fnref:1">[1]</a>
+        <td class=fndef-content ><a href="https://github.com/comnik/declarative-dataflow">3DF</a>
+    
 </table>
- <table class="fndef" id="fndef:2">
+ <table class=fndef  id="fndef:2">
     <tr>
-        <td class="fndef-backref"><a href="#fnref:2">[2]</a></td>
-        <td class="fndef-content"><a href="https://github.com/frankmcsherry/differential-dataflow">Differential Dataflow</a></td>
-    </tr>
+        <td class=fndef-backref ><a href="#fnref:2">[2]</a>
+        <td class=fndef-content ><a href="https://github.com/frankmcsherry/differential-dataflow">Differential Dataflow</a>
+    
 </table>
- <table class="fndef" id="fndef:3">
+ <table class=fndef  id="fndef:3">
     <tr>
-        <td class="fndef-backref"><a href="#fnref:3">[3]</a></td>
-        <td class="fndef-content"><a href="https://github.com/comnik/clj-3df">clj-3DF</a></td>
-    </tr>
+        <td class=fndef-backref ><a href="#fnref:3">[3]</a>
+        <td class=fndef-content ><a href="https://github.com/comnik/clj-3df">clj-3DF</a>
+    
 </table>
- <table class="fndef" id="fndef:4">
+ <table class=fndef  id="fndef:4">
     <tr>
-        <td class="fndef-backref"><a href="#fnref:4">[4]</a></td>
-        <td class="fndef-content"><a href="https://vega.github.io/vega/">Vega</a></td>
-    </tr>
+        <td class=fndef-backref ><a href="#fnref:4">[4]</a>
+        <td class=fndef-content ><a href="https://vega.github.io/vega/">Vega</a>
+    
 </table>
- <table class="fndef" id="fndef:5">
+ <table class=fndef  id="fndef:5">
     <tr>
-        <td class="fndef-backref"><a href="#fnref:5">[5]</a></td>
-        <td class="fndef-content">This is a Vega-lite spec, but all the things we&#39;ll see later are Vega. Vega specs are just quite verbose.</td>
-    </tr>
+        <td class=fndef-backref ><a href="#fnref:5">[5]</a>
+        <td class=fndef-content >This is a Vega-lite spec, but all the things we&#39;ll see later are Vega. Vega specs are just quite verbose.
+    
 </table>
- <table class="fndef" id="fndef:6">
+ <table class=fndef  id="fndef:6">
     <tr>
-        <td class="fndef-backref"><a href="#fnref:6">[6]</a></td>
-        <td class="fndef-content"><a href="https://vega.github.io/vega-lite/tutorials/streaming.html">Vega-Streaming</a></td>
-    </tr>
+        <td class=fndef-backref ><a href="#fnref:6">[6]</a>
+        <td class=fndef-content ><a href="https://vega.github.io/vega-lite/tutorials/streaming.html">Vega-Streaming</a>
+    
 </table>
- <table class="fndef" id="fndef:7">
+ <table class=fndef  id="fndef:7">
     <tr>
-        <td class="fndef-backref"><a href="#fnref:7">[7]</a></td>
-        <td class="fndef-content"><a href="http://www.nyc.gov/html/tlc/html/about/trip_record_data.shtml">NYC Cab Rides</a></td>
-    </tr>
+        <td class=fndef-backref ><a href="#fnref:7">[7]</a>
+        <td class=fndef-content ><a href="http://www.nyc.gov/html/tlc/html/about/trip_record_data.shtml">NYC Cab Rides</a>
+    
 </table>
  </p>
-</div><!-- CONTENT ENDS HERE -->
-        </div> <!-- end of id=main -->
-    </div> <!-- end of id=layout -->
+</div>
+        </div> 
+    </div> 
     
     
         <script src="/libs/highlight/highlight.pack.js"></script>
 <script>hljs.initHighlightingOnLoad();hljs.configure({tabReplace: '    '});</script>
-
-    
-  </body>
-</html>
