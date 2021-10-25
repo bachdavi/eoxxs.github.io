@@ -34,7 +34,13 @@ jobs:
     #   specific arguments, see the documentation or ?optimize in the REPL.
     - run: julia -e '
             using Pkg; Pkg.activate("."); Pkg.instantiate();
-            using NodeJS; run(`$(npm_cmd()) install highlight.js`);
+            using NodeJS; run(`$(npm_cmd()) install highlight.js`);'
+    - name: Build site
+      uses: julia-actions/setup-julia@v1
+      with:
+        version: 1.6
+    - run: julia -e '
+            using Pkg; Pkg.activate("."); Pkg.instantiate();
             using Franklin;
             optimize()'
     - name: Build and Deploy
