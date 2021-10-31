@@ -29,4 +29,4 @@ Some open-source projects I contributed to:
 
 ## Contact me
 
-[david.bach@relational.ai](mailto:david.bach@relational.ai)
+[me@david-bach.com](mailto:me@david-bach.com)
