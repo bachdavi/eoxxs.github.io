@@ -190,7 +190,7 @@ such thing like a mental representation of what has been learned. Or
 at least not yet.
 
 To conclude, the basic premise that mental states are despicable in a
-functional and computational way is very pervasive model and allows us
+functional and computational way is a very pervasive model and allows us
 to build and reason about what mental processes are, with a toolkit
 that has been developed over the last 50 years.
 
