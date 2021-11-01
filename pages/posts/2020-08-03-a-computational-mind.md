@@ -209,7 +209,7 @@ that has been developed over the last 50 years.
   **Fodor**, Special sciences, or disunity of science as a working
   hypothesis. Synthese, 28(2), 97–115.
 * \biblabel{chalmers94_comput_found_study_cognit}{Chalmers,
-  D. J. (1994)} **Chalmers** A computational foundation for the study
+  D. J. (1994)} **Chalmers**, A computational foundation for the study
   of cognition. Minds And Machines. 1994.
 * \biblabel{dennett17_from_bach}{Dennett, D. C. (2017)} **Dennett**,
   From bacteria to bach and back : the evolution of minds.
