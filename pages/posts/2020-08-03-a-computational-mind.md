@@ -203,7 +203,7 @@ that has been developed over the last 50 years.
   of mathematical biology, 52 1-2(), 99–115–73–97.
 * \biblabel{putnam67_natur_mental_states}{Putnam, H. (1967)}
   **Putnam**, The nature of mental states. In W. Capitan, & D. Merrill
-  (Eds.), Art, Mind, and Religion (pp. 1–223). : Pittsburgh University
+  (Eds.), Art, Mind, and Religion (pp. 1–223). Pittsburgh University
   Press.
 * \biblabel{fodor74_special_scien_or_disun_scien}{Fodor, J. A. (1974)}
   **Fodor**, Special sciences, or disunity of science as a working
@@ -214,8 +214,8 @@ that has been developed over the last 50 years.
 * \biblabel{dennett17_from_bach}{Dennett, D. C. (2017)} **Dennett**,
   From bacteria to bach and back : the evolution of minds.
 * \biblabel{pinker11_words_rules}{Pinker, S. (2011)} **Pinker**, Words
-  and rules (1999/2011). : New York, NY: Harper Perennial.
-* \biblabel{carlini16_towar_evaluat_robus_neural_networ}{Carlini, N.,
+  and rules (1999/2011). New York, Harper Perennial.
+* \biblabel{carlini16_towar_evaluat_robus_neural_networ}{Carlini, N.
   & Wagner, D. A. (2016)} **Carlini**, **Wagner**, Towards evaluating
   the robustness of neural networks. CoRR, abs/1608.04644().
 
