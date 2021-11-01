@@ -212,7 +212,7 @@ that has been developed over the last 50 years.
   D. J. (1994)} **Chalmers**, A computational foundation for the study
   of cognition. Minds And Machines. 1994.
 * \biblabel{dennett17_from_bach}{Dennett, D. C. (2017)} **Dennett**,
-  From bacteria to bach and back : the evolution of minds.
+  From Bacteria to Bach and Back : The Evolution of Minds.
 * \biblabel{pinker11_words_rules}{Pinker, S. (2011)} **Pinker**, Words
   and rules (1999/2011). New York, Harper Perennial.
 * \biblabel{carlini16_towar_evaluat_robus_neural_networ}{Carlini, N.
