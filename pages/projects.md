@@ -19,7 +19,7 @@ features like exporting and loading data, the incremental metadata
 system and the user-facing notebook product.
 
 # Towards an instantaneous measure for information transfer of temporal networks 
-*06/2019 - 12/2019*, [Thesis ](/assets/pages/projects/MA_Thesis.pdf)
+*06/2019 - 12/2019*
 
 In my master thesis at [ETH Zurich](https://ethz.ch/en.html) we
 developed a novel measure for information transfer in temporal
@@ -54,14 +54,14 @@ service showing the engagement of users in different cohorts. See this
 for inspiration.
 
 # Review of the usability, accuracy and costs of an ultrasonic-based airflow measurement method
-*04/2017 - 06/2017*, [Results (in German)](/assets/pages/projects/airflow.pdf)
+*04/2017 - 06/2017*
 
 I developed a prototype to measure airflow through a system of
 valves. We used a microcontroller and a time-of-flight algorithm to
 infer the properties of the flow.
 
 # Simulation of anti-helium production from interactions of cosmic-rays with interstellar matter
-*03/2016 - 06/2016*, [Thesis (in German)](/assets/pages/projects/BA_Thesis.pdf)
+*03/2016 - 06/2016*
 
 In my bachelor thesis at [RWTH
 Aachen](https://www.rwth-aachen.de/go/id/a/?lidx=1) we used
