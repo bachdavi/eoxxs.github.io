@@ -19,7 +19,7 @@ photography.
 
 I worked professionally with Rust, Clojure, Julia, and JavaScript.
 
-You can reach me over on [github](https://github.com/eoxxs) or
+You can reach me over on [github](https://github.com/bachdavi) or
 [twitter](https://twitter.com/bachdavi).
 
 Some open-source projects I contributed to:
