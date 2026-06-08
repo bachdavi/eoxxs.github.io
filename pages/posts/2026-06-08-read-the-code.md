@@ -26,7 +26,7 @@ to store records column-wise rather than row-wise; see [AoS and
 SoA](https://en.wikipedia.org/wiki/AoS_and_SoA).
 
 Searching for this term leads me to the implementation in the standard
-library, under multi_array_list.zig, as shown below:
+library, under `multi_array_list.zig`, as shown below:
 
 ```zig
 pub fn MultiArrayList(comptime T: type) type {
