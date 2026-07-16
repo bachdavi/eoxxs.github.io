@@ -1,0 +1,93 @@
+<!doctype html> <html lang=en > <meta charset=UTF-8 > <meta name=viewport  content="width=device-width, initial-scale=1"> <link rel=stylesheet  href="/libs/highlight/github.min.css"> <link rel=stylesheet  href="/css/franklin.css"> <link rel=stylesheet  href="/css/tufte.css"> <link rel=stylesheet  href="/css/latex.css"> <link rel=stylesheet  href="/css/adjust.css"> <link rel=icon  href="/assets/favicon.png"> <title>Comptime is funtime: Per-Span State Without a Hash Map</title> <h2 class=blog-name  style="font-style: normal;">David Bach</h2> <div id=layout > <div id=menu > <ul> <li><a href="/">About</a> <li><a href="/pages/ideas/index.html">Ideas</a> <li><a href="/pages/talks/index.html">Talks</a> </ul> </div> <div id=main > <div class=franklin-content ><h1 id=comptime_is_funtime_per-span_state_without_a_hash_map ><a href="#comptime_is_funtime_per-span_state_without_a_hash_map" class=header-anchor >Comptime is funtime: Per-Span State Without a Hash Map</a></h1> <p>In my free time, I have been following Casey Muratori&#39;s excellent <a href="https://www.computerenhance.com/p/table-of-contents">Performance-Aware Programming Series</a>. In Part 2: Basic Profiling, the task is to build a simple profiler. While doing so, I discovered a neat feature of Zig&#39;s comptime and generics.</p> <p>The profiler is supposed to be easy to use, accurate, and, crucially, have low overhead. It has the three global variables shown below. These are not thread-safe, as we intentionally only want to profile single-threaded programs:</p> <ul> <li><p>A buffer of spans with a fixed capacity holding the timings for each profiling block.</p> <li><p>The current index.</p> <li><p>The current parent index.</p> </ul> <p>The fixed size means we can only have up to that number of unique spans. That is fine because we are instrumenting our code and it is unlikely we want to time more than <code>4096</code><strong>unique</strong> functions or blocks.</p> <pre><code class=language-zig >var spans: &#91;4096&#93;Span &#61; undefined;
+var current_index: SpanIndex &#61; .reserved;
+var current_parent_index: ?SpanIndex &#61; null;
+
+pub const Span &#61; struct &#123;
+    name: &#91;&#93;const u8,
+    elapsed: u64,
+    elapsed_children: u64,
+    hit_count: u64,
+&#125;;
+
+const SpanIndex &#61; enum&#40;u32&#41; &#123;
+    reserved &#61; 0,
+    _,
+&#125;;</code></pre> <p>Each span is identified by its <code>name</code>, and it tracks how much time has elapsed, how much time its children took, and how many times it has been called. When we instrument our code, spans will be written into the <code>spans</code> buffer in the order of invocation. If a function that we profile is called twice, we don&#39;t add another span, we increment the existing span&#39;s values.</p> <p>The API has two functions, <code>beginBlock</code> and <code>endBlock</code>, and can be used in the following way:</p> <pre><code class=language-zig >pub fn beginBlock&#40;comptime name: &#91;&#93;const u8&#41; SpanBlock &#123;&#125;
+
+pub fn endBlock&#40;block: SpanBlock&#41; void &#123;&#125;
+
+fn readFile&#40;&#41; &#33;void &#123;
+    const block &#61; profile.beginBlock&#40;&quot;readFile&quot;&#41;;
+    defer profile.endBlock&#40;block&#41;;
+
+    // ... implementation ...
+&#125;</code></pre> <p>Note: We could use <code>@src&#40;&#41;</code> instead but I opted for the string variant for now. </p> <p>When <code>endBlock&#40;block&#41;</code> runs, we store the elapsed time for this span in the <code>spans</code> buffer.</p> <p>The question is: How do we compute the index of a particular span in the <code>spans</code> buffer <strong>without</strong> maintaining a <code>HashMap</code> between block name and index?</p> <p>In the course, Casey uses <code>__COUNTER__</code> from C&#43;&#43;, which <em>&quot;gives an increasing non-negative integral value each time it is used.&quot;</em> At each call site, the <code>beginBlock</code> function would get a unique index for it span <strong>at compile time</strong>. We don&#39;t have this in Zig. Actually, we could have done this a while ago, but since <a href="https://github.com/ziglang/zig/pull/19414">#19414</a>, global mutable comptime state is no longer allowed.</p> <p>In Zig, containers are namespaces that can contain top-level mutable declarations. <code>spans</code>, <code>current_index</code>, and <code>current_parent_index</code> are the three mutable top-level declarations of the <code>profile.zig</code> container &#40;files are structs themselves&#41;. In Zig, generics are implemented via <code>comptime</code>: we write a function that returns a <code>type</code>. If we combine the two, we get the following:</p> <pre><code class=language-zig >fn SpanSlot&#40;comptime name: &#91;&#93;const u8&#41; type &#123;
+    return struct &#123;
+        const span_name &#61; name;
+        // This is a mutable top-level declaration in this specialized
+        // struct, storing the index the span will have in the
+        // &#96;spans&#96; buffer.
+        var index: ?SpanIndex &#61; null;
+    &#125;;
+&#125;</code></pre> <p>Each time we call <code>beginBlock</code>, we call <code>SpanSlot</code> to get the unique container for the given name. Then we look up the <code>index</code> variable in the container, and if it does not exist, we increment the index counter and store it.</p> <pre><code class=language-zig >pub fn beginBlock&#40;comptime name: &#91;&#93;const u8&#41; SpanBlock &#123;
+    const Slot &#61; SpanSlot&#40;name&#41;;
+
+    const span_index: SpanIndex &#61; Slot.index orelse blk: &#123;
+        // This is the first time we see a block with this
+        // &#96;name&#96;. Increment the index and store it in the container.
+        const next: SpanIndex &#61; @enumFromInt&#40;@intFromEnum&#40;current_index&#41; &#43; 1&#41;;
+
+        Slot.index &#61; next;
+
+        current_index &#61; next;
+
+        // Initialize the span.
+        var span_ptr &#61; &amp;spans&#91;@intFromEnum&#40;next&#41;&#93;;
+        span_ptr.name &#61; name;
+        span_ptr.hit_count &#61; 0;
+        span_ptr.elapsed &#61; 0;
+        span_ptr.elapsed_children &#61; 0;
+
+        break :blk next;
+    &#125;;
+
+    /// ...
+&#125;</code></pre> <p>When we do <code>const Slot &#61; SpanSlot&#40;name&#41;</code>, we get back a <code>type</code>, not a local instance of this <code>type</code>. This gives us global mutable state <strong>per</strong> span without needing to explicitly track all possible spans we have, at the expense of compilation time.</p> <p>Our solution is not entirely identical to using <code>__COUNTER__</code>. We still increment the index and store it at runtime. But at least this way we don&#39;t need to keep a hash map around. </p> <h2 id=bonus_1 ><a href="#bonus_1" class=header-anchor >Bonus 1</a></h2> <p>What are the effects on compilation time when we have a non-trivial number of spans? To simulate this I generate a Zig program that contains increasing number of functions that are timed with unique names and compiled it using <code>ReleaseFast</code>:</p> <ul> <li><p>0 spans : 5 secs</p> <li><p>100 spans: 5.2 secs</p> <li><p>1000 spans: 6.8 secs</p> <li><p>4032 spans: 13.3 secs</p> </ul> <p>To further compare this I edited the 4032 spans version and used the same span name: </p> <ul> <li><p>4032 spans &#40;identical&#41;: 7.3 secs</p> </ul> <p>Profiling lots of functions does have an effect on compilation time but gets only really noticeable from 1000 spans onward.</p> <h2 id=bonus_2 ><a href="#bonus_2" class=header-anchor >Bonus 2</a></h2> <p>If you are wondering how we are tracking time, we are doing something fun. In the course, Casey uses the <code>rdtsc</code> instruction, which measures something like CPU cycles &#40;invariant cycles in modern CPUs&#41;. I&#39;m on a Mac with an M-series chip, and ARM does not have the <code>rdtsc</code> instruction. But there is another counter we can use for our purposes:</p> <pre><code class=language-zig >pub fn readCounter&#40;&#41; u64 &#123;
+    var val: u64 &#61; undefined;
+
+    asm volatile &#40;&quot;mrs &#37;&#91;val&#93;, cntpct_el0&quot;
+        : &#91;val&#93; &quot;&#61;r&quot; &#40;val&#41;,
+    &#41;;
+
+    return val;
+&#125;</code></pre> <p><code>mrs</code> means that we want to read a system register, in our case, <code>cntpct_el0</code>, which is a hardware counter <a href="https://developer.arm.com/documentation/ddi0601/2021-12/AArch64-Registers/CNTPCT-EL0--Counter-timer-Physical-Count-register">&#40;documentation&#41;</a>.</p> <p>If we want to know how much time has elapsed, we can use the frequency of this counter:</p> <pre><code class=language-zig >pub fn readCounterFreq&#40;&#41; u64 &#123;
+    var val: u64 &#61; undefined;
+
+    asm volatile &#40;&quot;mrs &#37;&#91;val&#93;, cntfrq_el0&quot;
+        : &#91;val&#93; &quot;&#61;r&quot; &#40;val&#41;,
+    &#41;;
+
+    return val;
+&#125;</code></pre> <p><code>readCounterFreq</code> returns 24 MHz on my MacBook. To get the elapsed time in milliseconds, we do:</p> <pre><code class=language-zig >fn msFromElapsed&#40;elapsed: u64&#41; u64 &#123;
+    return elapsed * 1000 / readCounterFreq&#40;&#41;;
+&#125;</code></pre> <h3 id=bonus_3 ><a href="#bonus_3" class=header-anchor >Bonus 3</a></h3> <p>Where does Zig store the mutable declarations of structs? I had a look at the debug executable using <code>lldb</code> on my Mac. I&#39;m omitting some steps, and I had some help from GPT-5.6. First, I looked for symbols matching one profiling block&#39;s <code>.index</code> usage. This showed up:</p> <pre><code class=language-text >&#40;lldb&#41;  image lookup -s &#39;profiler.SpanSlot&#40;&quot;readFile&quot;&#91;0..9&#93;&#41;.index&#39;
+1 symbols match &#39;profiler.SpanSlot&#40;&quot;readFile&quot;&#91;0..9&#93;&#41;.index&#39; in ...:
+        Address: pap&#91;0x00000001001e8dd8&#93; &#40;pap.__DATA.__bss &#43; 24&#41;
+        Summary: pap&#96;profiler.SpanSlot&#40;&quot;readFile&quot;&#91;0..9&#93;&#41;.index</code></pre> <p><code>pap</code> is the name of the executable. There is already a first hint. The address <code>0x00000001001e8dd8</code> is in the <code>__DATA,__bss</code> section of the macOS executable. That is where global mutable state is usually stored. Then I set up a watchpoint around that address, stepping through the program until it is triggered:</p> <pre><code class=language-text >&#40;lldb&#41; continue
+Process 61200 resuming
+
+Watchpoint 1 hit:
+old value: 0
+new value: -6148915419949301757
+Process 61200 stopped
+* thread #1, queue &#61; &#39;com.apple.main-thread&#39;, stop reason &#61; watchpoint 1
+    frame #0: 0x00000001001140c4 pap&#96;profiler.beginBlock__anon_27318 at profiler.zig:53:9
+   50
+   51           Slot.index &#61; next;
+   52
+-&gt; 53           current_index &#61; next;
+   54
+   55           var span_ptr &#61; &amp;spans&#91;@intFromEnum&#40;next&#41;&#93;;
+   56           span_ptr.name &#61; name;
+Target 0: &#40;pap&#41; stopped.</code></pre> <p>Now we are in the function that I showed above, <code>beginBlock</code>, after we set <code>Slot.index &#61; next;</code>. At this time the index should be stored at that address. So, we inspect it:</p> <pre><code class=language-text >&#40;lldb&#41;  memory read --format x --size 8 --count 1 0x00000001001e8dd8
+0x1001e8dd8: 0xaaaaaa0100000003</code></pre> <p>And as you can see, the low 32 bits is the value <code>3</code>, which I expect because it is the third block I time in the program. The following <code>01</code> is the tag indicating that the <code>?SpanIndex</code> is non-null, and the remaining <code>aa</code> bytes are padding filled by the debug build.</p> <p>To summarize: Zig emits <code>Slot.index</code> as mutable static storage for each specialized <code>SpanSlot</code> type. That is exactly what we wanted to achieve and allows us to avoid a runtime hash map.</p> </div> </div> </div> <script src="/libs/highlight/highlight.pack.js"></script> <script src="/libs/highlight/zig.min.js"></script> <script>hljs.configure({tabReplace: ' '});hljs.highlightAll();</script>
