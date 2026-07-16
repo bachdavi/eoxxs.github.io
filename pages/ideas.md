@@ -1,6 +1,9 @@
 @def title = "Ideas"
 
 # Ideas
+\post{/pages/posts/2026-07-15-comptime-is-funtime/index.html}{15 Jul
+2026: Comptime is funtime: Per-Span State Without a Hash Map}
+
 \post{/pages/posts/2026-06-08-read-the-code/index.html}{08 Jun
 2026: Reading source code}
 
