@@ -1,7 +1,7 @@
-@def title = "Reading source code"
+@def title = "Reading Source Code"
 @def hascode = true
 
-# Reading source code
+# Reading Source Code
 
 One of the things I like about the [Zig](https://ziglang.org/)
 programming language is how readable it is. This applies not only to

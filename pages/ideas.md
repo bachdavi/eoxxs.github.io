@@ -5,7 +5,7 @@
 2026: Comptime is funtime: Container-level Mutable State}
 
 \post{/pages/posts/2026-06-08-read-the-code/index.html}{08 Jun
-2026: Reading source code}
+2026: Reading Source Code}
 
 \post{/pages/posts/2020-08-03-a-computational-mind/index.html}{03 Aug
 2020: A Computational Mind}
