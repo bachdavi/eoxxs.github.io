@@ -1,7 +1,7 @@
-@def title = "Comptime is funtime: Per-Span State Without a Hash Map"
+@def title = "Comptime is funtime: Container-level Mutable State"
 @def hascode = true
 
-# Comptime is funtime: Per-Span State Without a Hash Map
+# Comptime is funtime: Container-level Mutable State
 
 In my free time, I have been following Casey Muratori's excellent
 [Performance-Aware Programming
