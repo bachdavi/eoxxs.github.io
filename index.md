@@ -4,7 +4,7 @@
 
 # About
 
-Currently, I work as a computer scientist for
+Currently, I work as a computer scientist and software engineer for
 [RelationalAI](https://relational.ai), and formerly, I worked as a
 software consultant for Clockworks.
 
@@ -12,15 +12,14 @@ I studied physics at [ETH Zurich](https://ethz.ch/en.html), focusing
 on computational quantum physics, quantum information theory and
 complex systems.
 
-I am interested in functional-relational programming,
-neuroinformatics, and quantum information theory. In my free time I
-listen to records, make music, go rock climbing, or dabble in analog
-photography.
+I am interested in functional-relational programming, systems
+programming, and mathematical solvers. In my free time I listen to
+records, make music, or go rock climbing.
 
-I worked professionally with Rust, Clojure, Julia, and JavaScript.
+I worked professionally with Rust, Zig, Clojure, Julia, and JavaScript.
 
 You can reach me over on [github](https://github.com/bachdavi) or
-[twitter](https://twitter.com/bachdavi).
+[X](https://x.com/bachdavi).
 
 Some open-source projects I contributed to:
 
@@ -30,4 +29,4 @@ Some open-source projects I contributed to:
 
 ## Contact me
 
-[me@david-bach.com](mailto:me@david-bach.com)
+[david.bach@fastmail.com](mailto:david.bach@fastmail.com)
