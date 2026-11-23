@@ -8,7 +8,9 @@
     .static_assets = [
         "CNAME",
         ".nojekyll",
-        "Temml.woff2",
+        "latinmodernmath.woff2",
+        "latinmodernmath-LICENSE.txt",
+        "temml-LICENSE.txt",
         "assets/pages",
         "vendor/highlight",
         "fonts",

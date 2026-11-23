@@ -1,5 +1,10 @@
 <extend template="base.shtml">
 <head id="head">
+    <ctx :if="$page.custom.has('math')">
+        <link rel="stylesheet" href="$site.asset('Temml-Latin-Modern.css').link()">
+        <script defer src="$site.asset('temml.min.js').link()"></script>
+        <script defer src="$site.asset('render-mathtex.js').link()"></script>
+    </ctx>
     <ctx :if="$page.custom.has('plain_code_language')">
         <script type="module" src="$site.asset('highlight-clojure.js').link()"></script>
     </ctx>

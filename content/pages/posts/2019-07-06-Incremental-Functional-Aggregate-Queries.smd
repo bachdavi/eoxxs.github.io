@@ -2,6 +2,7 @@
 .title = "Incremental Functional Aggregate Queries",
 .date = .date("2019-07-06T00:00:00"),
 .layout = "page.shtml",
+.custom = .{ .math = true },
 ---
 
 # Incremental Functional Aggregate Queries

@@ -2,6 +2,7 @@
 .title = "A Computational Mind",
 .date = .date("2020-08-03T00:00:00"),
 .layout = "page.shtml",
+.custom = .{ .math = true },
 ---
 
 # A Computational Mind

@@ -1,18 +1,22 @@
 /*
-Temml.woff2 is a clone of KaTeX_Script-Regular, except that the code points
-have been changed from ASCII to Unicode Mathematical Alphanumeric Symbols Script capitals,
-Unicode range 1D49C to 1D4B5.
+The Latin Modern fonts are released under the GUST font license, which is
+legally equivalent to the LaTeX Project Public License. See the files in this
+directory for details. The fonts can be obtained from several TeX distributions
+or package managers.
+
+The Latin Modern WOFF font has been obtained from
+http://www.gust.org.pl/projects/e-foundry/
+
+Local change: the Temml.woff2 helper font is not used (it carries a
+non-commercial license). Script capitals and primes come from Latin Modern Math.
 */
 
 @font-face {
-  font-family: 'Temml';
-  src: url('Temml.woff2') format('woff2');
-  font-weight: normal;
-  font-style: normal;
+  font-family: Latin Modern Math;
+  src: url('./latinmodernmath.woff2');
 }
 
 math {
-  font-family: "Cambria Math", 'STIXTwoMath-Regular', 'NotoSansMath-Regular', math;
   font-style: normal;
   font-weight: normal;
   line-height: normal;
@@ -30,21 +34,21 @@ math * {
   border-color: currentColor;
 }
 
+math {
+  font-family: "Latin Modern Math", math;
+}
+
 /* Next line is active in Firefox and Safari.
  * Not in Chromium, which recognizes display: "block math" written inline. */
 math.tml-display { display: block; }
 
-*.mathcal {
-  /* NotoSans */
-  font-feature-settings: 'ss01';
+*.mathscr {
+  font-family: "Latin Modern Math";
 }
 
-math .mathscr {
-  font-family: "Temml";
-}
-
+/* Chromium prime alignment */
 mo.tml-prime {
-  font-family: Temml;
+  font-family: "Latin Modern Math";
 }
 
 /* Prevent f' from overlapping in Chromium */
@@ -74,7 +78,7 @@ menclose {
     position: relative;
     padding: 0.5ex 0ex;
   }
-
+  
     .tml-overline {
     padding: 0.1em 0 0 0;
     border-top: 0.065em solid;
@@ -137,7 +141,7 @@ menclose {
     text-align: left;
     position: relative;
   }
-
+  
   .phasor-bottom {
     border-bottom: 0.067em solid;
     padding: 0.2em 0.2em 0.1em 0.6em;
