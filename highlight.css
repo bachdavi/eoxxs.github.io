@@ -1,6 +1,6 @@
 /* Custom light palette shared by Zine and the Clojure highlight.js fallback. */
 pre code { color: #24292f; }
-pre .comment, pre .hljs-comment { color: #637080; font-style: italic; }
+pre .comment, pre .hljs-comment { color: #a0412d; font-style: italic; }
 pre .keyword, pre .storage, pre .hljs-keyword { color: #a62641; }
 pre .string, pre .hljs-string, pre .hljs-regexp { color: #1c653d; }
 pre .numeric, pre .constant, pre .hljs-number, pre .hljs-literal { color: #8250a3; }
