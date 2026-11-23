@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head id="head">
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="data:,">
+        <title>Comptime is funtime — David Bach</title>
+        <link rel="stylesheet" href="/style.css">
+        <link rel="stylesheet" href="/highlight.css">
+        <link rel="stylesheet" href="/Temml-Local.css">
+        <script defer src="/temml.min.js"></script>
+        <script defer src="/render-mathtex.js"></script>
+        <link rel="alternate" type="application/rss+xml" title="David Bach" href="/feed.xml">
+        
+    
+
+    </head>
+    <body id="body">
+        <a class="skip-link" href="#main">Skip to content</a>
+        <header>
+            <a class="site-title" href="/">David Bach</a>
+            <nav aria-label="Main navigation">
+                <a href="/">About</a>
+                <a href="/pages/ideas/">Ideas</a>
+                <a href="/pages/talks/">Talks</a>
+            </nav>
+        </header>
+        <main id="main">
+    <article class="" data-plain-code-language=""><h1>Comptime is fun time</h1><p>For a recent project we had to write a columnar CSV parser with a fixed schema and decided to use Zig for this.</p><p>The CSV files we were supposed to read were all with a set of compile-time known schemas, about 13 different ones. After parsing we needed to efficiently access the records in a columnar way. We could not use a columnar format like Arrow, we had to read CSV files.</p><h2>Schema</h2><p>We decided to use <code>MultiArrayList</code> to represent slices of records in a columnar way. In our case some of the data we dealt with encoded linear constraints we passed to solvers like HiGHs or Gurobi.</p><pre><code class="zig">
+<span class="comment_documentation comment spell">// Each row is in COO (coordinate list).</span>
+<span class="keyword">const</span> <span class="constant variable_builtin type variable">SparseMatrixRow</span> <span class="operator">=</span> <span class="keyword_type">struct</span> <span class="punctuation_bracket">{</span>
+    <span class="constant variable_builtin type variable_member variable">row</span><span class="punctuation_delimiter">:</span> <span class="type_builtin">u64</span><span class="punctuation_delimiter">,</span>
+    <span class="constant variable_builtin type variable_member variable">col</span><span class="punctuation_delimiter">:</span> <span class="type_builtin">u64</span><span class="punctuation_delimiter">,</span>
+    <span class="constant variable_builtin type variable_member variable">value</span><span class="punctuation_delimiter">:</span> <span class="type_builtin">f64</span><span class="punctuation_delimiter">,</span>
+<span class="punctuation_bracket">}</span><span class="punctuation_delimiter">;</span>
+
+<span class="keyword">const</span> <span class="constant variable_builtin type variable">SparseMatrix</span> <span class="operator">=</span> <span class="constant variable_builtin function_call variable type">MultiArrayList</span><span class="punctuation_bracket">(</span><span class="constant variable_builtin type variable">SparseMatrixRow</span><span class="punctuation_bracket">)</span><span class="punctuation_delimiter">;</span>
+</code></pre>
+<p>The record type is our schema. We want to compile a specialized reader for this particular schema, parsing CSV records and returning or filling a <code>MultiArrayList</code>.</p><p>We want to support a subset of primitive types in Zig, notably also optionals.</p><h2>Tokenizer</h2><p>We implement a simple tokenizer (heavily inspired by the Zig languages compiler tokenizer).</p><pre><code class="zig">
+<span class="keyword">const</span> <span class="constant variable_builtin type variable">Tokenizer</span> <span class="operator">=</span> <span class="keyword_type">struct</span> <span class="punctuation_bracket">{</span>
+    <span class="constant variable_builtin type variable_member variable">buffer</span><span class="punctuation_delimiter">:</span> <span class="punctuation_bracket">[</span><span class="punctuation_delimiter">:</span><span class="number">0</span><span class="punctuation_bracket">]</span><span class="keyword">const</span> <span class="type_builtin">u8</span><span class="punctuation_delimiter">,</span>
+    <span class="constant variable_builtin type variable_member variable">index</span><span class="punctuation_delimiter">:</span> <span class="type_builtin">usize</span><span class="punctuation_delimiter">,</span>
+
+    <span class="comment_documentation comment spell">// Each token has a tag and a location in the source.</span>
+    <span class="keyword">const</span> <span class="constant variable_builtin type variable">Token</span> <span class="operator">=</span> <span class="keyword_type">struct</span> <span class="punctuation_bracket">{</span>
+        <span class="constant variable_builtin type variable_member variable">tag</span><span class="punctuation_delimiter">:</span> <span class="constant variable_builtin type variable">Tag</span><span class="punctuation_delimiter">,</span>
+        <span class="constant variable_builtin type variable_member variable">loc</span><span class="punctuation_delimiter">:</span> <span class="constant variable_builtin type variable">Loc</span><span class="punctuation_delimiter">,</span>
+
+        <span class="comment_documentation comment spell">// Index points into the source where the value of this token</span>
+        <span class="comment_documentation comment spell">// starts.</span>
+        <span class="keyword">const</span> <span class="constant variable_builtin type variable">Loc</span> <span class="operator">=</span> <span class="keyword_type">struct</span> <span class="punctuation_bracket">{</span>
+            <span class="constant variable_builtin type variable_member variable">start</span><span class="punctuation_delimiter">:</span> <span class="type_builtin">usize</span><span class="punctuation_delimiter">,</span>
+            <span class="constant variable_builtin type variable_member variable">end</span><span class="punctuation_delimiter">:</span> <span class="type_builtin">usize</span><span class="punctuation_delimiter">,</span>
+        <span class="punctuation_bracket">}</span><span class="punctuation_delimiter">;</span>
+
+        <span class="comment_documentation comment spell">// Kind of token.</span>
+        <span class="keyword">const</span> <span class="constant variable_builtin type variable">Tag</span> <span class="operator">=</span> <span class="keyword_type">enum</span> <span class="punctuation_bracket">{</span>
+            <span class="constant variable_builtin type variable_member variable">field</span><span class="punctuation_delimiter">,</span>
+            <span class="constant variable_builtin type variable_member variable">delimiter</span><span class="punctuation_delimiter">,</span>
+            <span class="constant variable_builtin type variable_member variable">clrf</span><span class="punctuation_delimiter">,</span>
+            <span class="constant variable_builtin type variable_member variable">invalid</span><span class="punctuation_delimiter">,</span>
+            <span class="constant variable_builtin type variable_member variable">eof</span><span class="punctuation_delimiter">,</span>
+        <span class="punctuation_bracket">}</span><span class="punctuation_delimiter">;</span>
+    <span class="punctuation_bracket">}</span><span class="punctuation_delimiter">;</span>
+</code></pre>
+<p>The tokznier contains a zero-terminated slice, the CSV file we are reading, and it produces tokens. Each token points to some data in the buffer and has a tag. When looking at <a href="https://www.rfc-editor.org/rfc/rfc4180.html">rfc4180</a> we know that a valid CSV file does not have so many different tokens.</p><p>The tokenizer reads each byte from the source and we have a simple state machine to decide what kind of token we are dealing with:</p><pre><code class="zig">    <span class="comment_documentation comment spell">// State of the tokenizer.</span>
+    <span class="keyword">const</span> <span class="constant variable_builtin type variable">State</span> <span class="operator">=</span> <span class="keyword_type">enum</span> <span class="punctuation_bracket">{</span>
+        <span class="constant variable_builtin type variable_member variable">start</span><span class="punctuation_delimiter">,</span>
+        <span class="constant variable_builtin type variable_member variable">eof</span><span class="punctuation_delimiter">,</span>
+        <span class="constant variable_builtin type variable_member variable">quote</span><span class="punctuation_delimiter">,</span>
+        <span class="constant variable_builtin type variable_member variable">field</span><span class="punctuation_delimiter">,</span>
+        <span class="constant variable_builtin type variable_member variable">delimiter</span><span class="punctuation_delimiter">,</span>
+        <span class="constant variable_builtin type variable_member variable">clrf</span><span class="punctuation_delimiter">,</span>
+        <span class="constant variable_builtin type variable_member variable">invalid</span><span class="punctuation_delimiter">,</span>
+    <span class="punctuation_bracket">}</span><span class="punctuation_delimiter">;</span>
+
+    <span class="comment_documentation comment spell">// Produce the next token.</span>
+    <span class="keyword_modifier">pub</span> <span class="keyword_function">fn</span> <span class="constant variable_builtin type variable">next</span><span class="punctuation_bracket">(</span><span class="constant variable_builtin variable_parameter variable type">self</span><span class="punctuation_delimiter">:</span> <span class="operator">*</span><span class="constant variable_builtin type variable">Tokenizer</span><span class="punctuation_bracket">)</span> <span class="constant variable_builtin type variable">Token</span> <span class="punctuation_bracket">{</span>
+        <span class="keyword">var</span> <span class="constant variable_builtin type variable">result</span><span class="punctuation_delimiter">:</span> <span class="constant variable_builtin type variable">Token</span> <span class="operator">=</span> <span class="punctuation_delimiter">.</span><span class="punctuation_bracket">{</span>
+            <span class="punctuation_delimiter">.</span><span class="constant variable_builtin type variable_member variable">tag</span> <span class="operator">=</span> <span class="punctuation_delimiter">.</span><span class="constant variable_builtin type variable">field</span><span class="punctuation_delimiter">,</span>
+            <span class="punctuation_delimiter">.</span><span class="constant variable_builtin type variable_member variable">loc</span> <span class="operator">=</span> <span class="punctuation_delimiter">.</span><span class="punctuation_bracket">{</span> <span class="punctuation_delimiter">.</span><span class="constant variable_builtin type variable_member variable">start</span> <span class="operator">=</span> <span class="constant variable_builtin type variable">self</span><span class="punctuation_delimiter">.</span><span class="constant variable_builtin type variable_member variable">index</span><span class="punctuation_delimiter">,</span> <span class="punctuation_delimiter">.</span><span class="constant variable_builtin type variable_member variable">end</span> <span class="operator">=</span> <span class="constant_builtin">undefined</span> <span class="punctuation_bracket">}</span><span class="punctuation_delimiter">,</span>
+        <span class="punctuation_bracket">}</span><span class="punctuation_delimiter">;</span>
+
+        <span class="constant label type variable variable_builtin">state</span><span class="punctuation_delimiter">:</span> <span class="keyword_conditional">switch</span> <span class="punctuation_bracket">(</span><span class="constant variable_builtin type variable">State</span><span class="punctuation_delimiter">.</span><span class="constant variable_builtin type variable_member variable">start</span><span class="punctuation_bracket">)</span> <span class="punctuation_bracket">{</span>
+            <span class="punctuation_delimiter">.</span><span class="constant variable_builtin type variable">start</span> <span class="punctuation_delimiter">=&gt;</span> <span class="punctuation_bracket">{</span>
+                <span class="keyword_conditional">switch</span> <span class="punctuation_bracket">(</span><span class="constant variable_builtin type variable">self</span><span class="punctuation_delimiter">.</span><span class="constant variable_builtin type variable_member variable">buffer</span><span class="punctuation_bracket">[</span><span class="constant variable_builtin type variable">self</span><span class="punctuation_delimiter">.</span><span class="constant variable_builtin type variable_member variable">index</span><span class="punctuation_bracket">]</span><span class="punctuation_bracket">)</span> <span class="punctuation_bracket">{</span>
+                    <span class="character">&apos;&quot;&apos;</span> <span class="punctuation_delimiter">=&gt;</span> <span class="punctuation_bracket">{</span>
+                        <span class="comment_documentation comment spell">// Quoted fields should not contain the quote</span>
+                        <span class="comment_documentation comment spell">// itself.</span>
+                        <span class="constant variable_builtin type variable">result</span><span class="punctuation_delimiter">.</span><span class="constant variable_builtin type variable_member variable">loc</span><span class="punctuation_delimiter">.</span><span class="constant variable_builtin type variable_member variable">start</span> <span class="operator">=</span> <span class="constant variable_builtin type variable">self</span><span class="punctuation_delimiter">.</span><span class="constant variable_builtin type variable_member variable">index</span> <span class="operator">+</span> <span class="number">1</span><span class="punctuation_delimiter">;</span>
+                        <span class="keyword_repeat">continue</span> <span class="punctuation_delimiter">:</span><span class="constant label type variable variable_builtin">state</span> <span class="punctuation_delimiter">.</span><span class="constant variable_builtin type variable">quote</span><span class="punctuation_delimiter">;</span>
+                    <span class="punctuation_bracket">}</span><span class="punctuation_delimiter">,</span>
+                    <span class="comment_documentation comment spell">// ... other cases ...</span>
+            <span class="punctuation_bracket">}</span><span class="punctuation_delimiter">,</span>
+            <span class="comment_documentation comment spell">// ... other states ...</span>
+        <span class="punctuation_bracket">}</span>
+        <span class="keyword_return">return</span> <span class="constant variable_builtin type variable">result</span><span class="punctuation_delimiter">;</span>
+<span class="punctuation_bracket">}</span><span class="punctuation_delimiter">;</span>
+</code></pre>
+<p>We read on byte after the other and use Zigs new <code>continue :state</code> to do a state transition. The statemachine encodes the CSV syntax. The only way for us to go into the <code>.invalid</code> state is when a plain <code>.field</code> contains a quote. That is not allowed.</p><h2>Reader</h2><p>Now the reader is a generic type specialized for the record type.</p><pre><code class="zig">
+<span class="comment_documentation comment spell">///  A ReaderType parses CSVs and returns a MultiArrayList of records.</span>
+<span class="keyword_modifier">pub</span> <span class="keyword_function">fn</span> <span class="constant variable_builtin type variable">ReaderType</span><span class="punctuation_bracket">(</span><span class="keyword_modifier">comptime</span> <span class="constant variable_builtin variable_parameter variable type">Record</span><span class="punctuation_delimiter">:</span> <span class="type_builtin">type</span><span class="punctuation_bracket">)</span> <span class="type_builtin">type</span> <span class="punctuation_bracket">{</span>
+    <span class="keyword_return">return</span> <span class="keyword_type">struct</span> <span class="punctuation_bracket">{</span>
+        <span class="constant variable_builtin type variable_member variable">inner</span><span class="punctuation_delimiter">:</span> <span class="operator">*</span><span class="constant variable_builtin type variable">Io</span><span class="punctuation_delimiter">.</span><span class="constant variable_builtin type variable_member variable">Reader</span><span class="punctuation_delimiter">,</span>
+
+        <span class="keyword">const</span> <span class="module constant variable_builtin type variable">Reader</span> <span class="operator">=</span> <span class="function_builtin keyword_import">@This</span><span class="punctuation_bracket">(</span><span class="punctuation_bracket">)</span><span class="punctuation_delimiter">;</span>
+        <span class="keyword">const</span> <span class="constant variable_builtin type variable">RecordList</span> <span class="operator">=</span> <span class="constant variable_builtin type variable">std</span><span class="punctuation_delimiter">.</span><span class="type constant variable_builtin function_call variable_member variable">MultiArrayList</span><span class="punctuation_bracket">(</span><span class="constant variable_builtin type variable">Record</span><span class="punctuation_bracket">)</span><span class="punctuation_delimiter">;</span>
+        <span class="comment_documentation comment spell">// ... implementation ...</span>
+        
+        <span class="comment_documentation comment spell">/// Parses a row into the Record struct.</span>
+        <span class="keyword_function">fn</span> <span class="constant variable_builtin type variable function">parseRecord</span><span class="punctuation_bracket">(</span><span class="constant variable_builtin variable_parameter variable type">tokenizer</span><span class="punctuation_delimiter">:</span> <span class="operator">*</span><span class="constant variable_builtin type variable">Tokenizer</span><span class="punctuation_delimiter">,</span> <span class="constant variable_builtin variable_parameter variable type">source</span><span class="punctuation_delimiter">:</span> <span class="punctuation_bracket">[</span><span class="punctuation_bracket">]</span><span class="keyword">const</span> <span class="type_builtin">u8</span><span class="punctuation_bracket">)</span> <span class="operator">!</span><span class="operator">?</span><span class="constant variable_builtin type variable">Record</span> <span class="punctuation_bracket">{</span>
+        <span class="punctuation_bracket">}</span>
+</code></pre>
+<p><code>parseRecord</code> is where the comptime starts. From the provided record type we statically know how many fields we expect and what types. We can use <code>comptime</code> to unroll the parsing loop, creating an optimal but also maintainable functionality.</p><pre><code class="zig"><span class="comment_documentation comment spell">/// Parses a row into the Record struct.</span>
+<span class="keyword_function">fn</span> <span class="constant variable_builtin type variable">parseRecord</span><span class="punctuation_bracket">(</span><span class="constant variable_builtin variable_parameter variable type">tokenizer</span><span class="punctuation_delimiter">:</span> <span class="operator">*</span><span class="constant variable_builtin type variable">Tokenizer</span><span class="punctuation_delimiter">,</span> <span class="constant variable_builtin variable_parameter variable type">source</span><span class="punctuation_delimiter">:</span> <span class="punctuation_bracket">[</span><span class="punctuation_bracket">]</span><span class="keyword">const</span> <span class="type_builtin">u8</span><span class="punctuation_bracket">)</span> <span class="operator">!</span><span class="operator">?</span><span class="constant variable_builtin type variable">Record</span> <span class="punctuation_bracket">{</span>
+    <span class="keyword">var</span> <span class="constant variable_builtin type variable">record</span><span class="punctuation_delimiter">:</span> <span class="constant variable_builtin type variable">Record</span> <span class="operator">=</span> <span class="constant_builtin">undefined</span><span class="punctuation_delimiter">;</span>
+    <span class="keyword">const</span> <span class="constant variable_builtin type variable">columns</span> <span class="operator">=</span> <span class="function_builtin">@typeInfo</span><span class="punctuation_bracket">(</span><span class="constant variable_builtin type variable">Record</span><span class="punctuation_bracket">)</span><span class="punctuation_delimiter">.</span><span class="constant variable_builtin type variable_member variable">@</span><span class="string constant variable_builtin type variable_member variable">&quot;struct&quot;</span><span class="punctuation_delimiter">.</span><span class="constant variable_builtin type variable_member variable">fields</span><span class="punctuation_delimiter">;</span>
+    <span class="keyword_modifier">inline</span> <span class="keyword_repeat">for</span> <span class="punctuation_bracket">(</span><span class="constant variable_builtin type variable">columns</span><span class="punctuation_delimiter">,</span> <span class="number">0</span><span class="operator">..</span><span class="punctuation_bracket">)</span> <span class="punctuation_bracket operator">|</span><span class="constant variable_builtin variable_parameter variable type">column</span><span class="punctuation_delimiter">,</span> <span class="constant variable_builtin variable_parameter variable type">idx</span><span class="punctuation_bracket operator">|</span> <span class="punctuation_bracket">{</span>
+        <span class="keyword">const</span> <span class="constant variable_builtin type variable">token</span> <span class="operator">=</span> <span class="constant variable_builtin type variable">tokenizer</span><span class="punctuation_delimiter">.</span><span class="type constant variable_builtin function_call variable_member variable">next</span><span class="punctuation_bracket">(</span><span class="punctuation_bracket">)</span><span class="punctuation_delimiter">;</span>
+        <span class="keyword_conditional">switch</span> <span class="punctuation_bracket">(</span><span class="constant variable_builtin type variable">token</span><span class="punctuation_delimiter">.</span><span class="constant variable_builtin type variable_member variable">tag</span><span class="punctuation_bracket">)</span> <span class="punctuation_bracket">{</span>
+            <span class="punctuation_delimiter">.</span><span class="constant variable_builtin type variable">eof</span> <span class="punctuation_delimiter">=&gt;</span> <span class="keyword_return">return</span> <span class="constant_builtin">null</span><span class="punctuation_delimiter">,</span>
+            <span class="punctuation_delimiter">.</span><span class="constant variable_builtin type variable">field</span> <span class="punctuation_delimiter">=&gt;</span> <span class="punctuation_bracket">{</span>
+                
+            <span class="punctuation_bracket">}</span><span class="punctuation_delimiter">,</span>
+        <span class="punctuation_bracket">}</span>
+    <span class="punctuation_bracket">}</span>
+</code></pre>
+<p>The <code>inline for</code> instruct the compiler to unroll this loop at compile time. If</p></article>
+    <section class="footnotes" aria-label="Footnotes"></section>
+</main>
+    </body>
+</html>

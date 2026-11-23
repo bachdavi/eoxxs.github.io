@@ -1,0 +1,9 @@
+/* Custom light palette shared by Zine and the Clojure highlight.js fallback. */
+pre code { color: #24292f; }
+pre .comment, pre .hljs-comment { color: #637080; font-style: italic; }
+pre .keyword, pre .storage, pre .hljs-keyword { color: #a62641; }
+pre .string, pre .hljs-string, pre .hljs-regexp { color: #1c653d; }
+pre .numeric, pre .constant, pre .hljs-number, pre .hljs-literal { color: #8250a3; }
+pre .function, pre .hljs-name, pre .hljs-built_in { color: #6639a6; }
+pre .type, pre .hljs-symbol { color: #075985; }
+pre .operator { color: #525e6d; }

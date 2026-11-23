@@ -1,8 +1,42 @@
-<!doctype html> <html lang=en > <meta charset=UTF-8 > <meta name=viewport  content="width=device-width, initial-scale=1"> <link rel=stylesheet  href="/libs/highlight/github.min.css"> <link rel=stylesheet  href="/css/franklin.css"> <link rel=stylesheet  href="/css/tufte.css"> <link rel=stylesheet  href="/css/latex.css"> <link rel=stylesheet  href="/css/adjust.css"> <link rel=icon  href="/assets/favicon.png"> <title>Reading Source Code</title> <h2 class=blog-name  style="font-style: normal;">David Bach</h2> <div id=layout > <div id=menu > <ul> <li><a href="/">About</a> <li><a href="/pages/ideas/index.html">Ideas</a> <li><a href="/pages/talks/index.html">Talks</a> </ul> </div> <div id=main > <div class=franklin-content ><h1 id=reading_source_code ><a href="#reading_source_code" class=header-anchor >Reading Source Code</a></h1> <p>One of the things I like about the <a href="https://ziglang.org/">Zig</a> programming language is how readable it is. This applies not only to projects written in it, but also to the standard library, compiler, and build system themselves. Whenever I need to look up how to use something in <code>std</code>, I open the Zig source code in my editor and search for it.</p> <p>The language design makes this quite easy and enjoyable. Files are structs, which are namespaces that contain definitions such as functions, types, or literals. There are no generated functions, no macros, and no inheritance. If I see a function, I can easily find it.</p> <p>Over time, reading source code compounds. I am exposed to a lot of high-quality code from maintainers and creators of the language. I develop a mental map of it. It starts to fit into my head.</p> <p>Let&#39;s take an example from a recent project I was working on. It required working with columnar data for a certain schema. I thought about using <code>std.MultiArrayList</code> for this. It is much more efficient to store records column-wise rather than row-wise; see <a href="https://en.wikipedia.org/wiki/AoS_and_SoA">AoS and SoA</a>.</p> <p>Searching for this term leads me to the implementation in the standard library, under <code>multi_array_list.zig</code>, as shown below:</p> <pre><code class=language-zig >pub fn MultiArrayList&#40;comptime T: type&#41; type &#123;
-    return struct &#123;
-        /// ... comment ...
-        bytes: &#91;*&#93;u8 &#61; undefined,
-        len: usize &#61; 0,
-        capacity: usize &#61; 0,
-        /// ... implementation ...
-&#125;</code></pre> <p>A <code>MultiArrayList</code> is a generic type in Zig. It takes a struct or union, here the <code>comptime T: type</code> argument, and returns a data structure specialized to my element type. Internally, it stores the arrays as a single, contiguous block of memory. An <code>ArrayList</code> would instead store my elements directly as a <code>&#91;&#93;T</code>.</p> <p>This representation is more memory efficient because no padding is needed, and it is more cache- and SIMD-friendly without losing ergonomics.</p> <p><code>MultiArrayList</code> has the usual array API: <code>get</code>, <code>set</code>, and <code>append</code>, which operate on the element type, <code>T: type</code> above. I can also access the arrays directly via <code>.slice&#40;&#41;</code>, which computes and caches start pointers for each field. <code>.items&#40;.&lt;field&gt;&#41;</code> on that gives me the array for a single field. Under the hood, that does a <code>@ptrCast&#40;@alignCast&#40;byte_ptr&#41;&#41;</code> on the bytes and returns a slice of the original field. The compiler guarantees that both the field name and slice type are valid.</p> <p>These days, with Claude Code and friends, reading how <code>MultiArrayList</code> is implemented is likely not what most people would do. That Zig naturally leads me to it is refreshing and, in my opinion, one of the great features of Zig.</p> </div> </div> </div> <script src="/libs/highlight/highlight.pack.js"></script> <script src="/libs/highlight/zig.min.js"></script> <script>hljs.configure({tabReplace: ' '});hljs.highlightAll();</script>
+<!DOCTYPE html>
+<html lang="en">
+    <head id="head">
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="data:,">
+        <title>Reading Source Code — David Bach</title>
+        <link rel="stylesheet" href="/style.css">
+        <link rel="stylesheet" href="/highlight.css">
+        <link rel="stylesheet" href="/Temml-Local.css">
+        <script defer src="/temml.min.js"></script>
+        <script defer src="/render-mathtex.js"></script>
+        <link rel="alternate" type="application/rss+xml" title="David Bach" href="/feed.xml">
+        
+    
+
+    </head>
+    <body id="body">
+        <a class="skip-link" href="#main">Skip to content</a>
+        <header>
+            <a class="site-title" href="/">David Bach</a>
+            <nav aria-label="Main navigation">
+                <a href="/">About</a>
+                <a href="/pages/ideas/">Ideas</a>
+                <a href="/pages/talks/">Talks</a>
+            </nav>
+        </header>
+        <main id="main">
+    <article class="" data-plain-code-language=""><h1>Reading Source Code</h1><p>One of the things I like about the <a href="https://ziglang.org/">Zig</a> programming language is how readable it is. This applies not only to projects written in it, but also to the standard library, compiler, and build system themselves. Whenever I need to look up how to use something in <code>std</code>, I open the Zig source code in my editor and search for it.</p><p>The language design makes this quite easy and enjoyable. Files are structs, which are namespaces that contain definitions such as functions, types, or literals. There are no generated functions, no macros, and no inheritance. If I see a function, I can easily find it.</p><p>Over time, reading source code compounds. I am exposed to a lot of high-quality code from maintainers and creators of the language. I develop a mental map of it. It starts to fit into my head.</p><p>Let’s take an example from a recent project I was working on. It required working with columnar data for a certain schema. I thought about using <code>std.MultiArrayList</code> for this. It is much more efficient to store records column-wise rather than row-wise; see <a href="https://en.wikipedia.org/wiki/AoS_and_SoA">AoS and SoA</a>.</p><p>Searching for this term leads me to the implementation in the standard library, under <code>multi_array_list.zig</code>, as shown below:</p><pre><code class="zig"><span class="keyword_modifier">pub</span> <span class="keyword_function">fn</span> <span class="constant variable_builtin type variable">MultiArrayList</span><span class="punctuation_bracket">(</span><span class="keyword_modifier">comptime</span> <span class="constant variable_builtin variable_parameter variable type">T</span><span class="punctuation_delimiter">:</span> <span class="type_builtin">type</span><span class="punctuation_bracket">)</span> <span class="type_builtin">type</span> <span class="punctuation_bracket">{</span>
+    <span class="keyword_return">return</span> <span class="keyword_type">struct</span> <span class="punctuation_bracket">{</span>
+        <span class="comment_documentation comment spell">/// ... comment ...</span>
+        <span class="constant variable_builtin type variable_member variable">bytes</span><span class="punctuation_delimiter">:</span> <span class="punctuation_bracket">[</span><span class="operator">*</span><span class="punctuation_bracket">]</span><span class="type_builtin">u8</span> <span class="operator">=</span> <span class="constant_builtin">undefined</span><span class="punctuation_delimiter">,</span>
+        <span class="constant variable_builtin type variable_member variable">len</span><span class="punctuation_delimiter">:</span> <span class="type_builtin">usize</span> <span class="operator">=</span> <span class="number">0</span><span class="punctuation_delimiter">,</span>
+        <span class="constant variable_builtin type variable_member variable">capacity</span><span class="punctuation_delimiter">:</span> <span class="type_builtin">usize</span> <span class="operator">=</span> <span class="number">0</span><span class="punctuation_delimiter">,</span>
+        <span class="comment_documentation comment spell">/// ... implementation ...</span>
+<span class="punctuation_bracket">}</span>
+</code></pre>
+<p>A <code>MultiArrayList</code> is a generic type in Zig. It takes a struct or union, here the <code>comptime T: type</code> argument, and returns a data structure specialized to my element type. Internally, it stores the arrays as a single, contiguous block of memory. An <code>ArrayList</code> would instead store my elements directly as a <code>[]T</code>.</p><p>This representation is more memory efficient because no padding is needed, and it is more cache- and SIMD-friendly without losing ergonomics.</p><p><code>MultiArrayList</code> has the usual array API: <code>get</code>, <code>set</code>, and <code>append</code>, which operate on the element type, <code>T: type</code> above. I can also access the arrays directly via <code>.slice()</code>, which computes and caches start pointers for each field. <code>.items(.&lt;field&gt;)</code> on that gives me the array for a single field. Under the hood, that does a <code>@ptrCast(@alignCast(byte_ptr))</code> on the bytes and returns a slice of the original field. The compiler guarantees that both the field name and slice type are valid.</p><p>These days, with Claude Code and friends, reading how <code>MultiArrayList</code> is implemented is likely not what most people would do. That Zig naturally leads me to it is refreshing and, in my opinion, one of the great features of Zig.</p></article>
+    <section class="footnotes" aria-label="Footnotes"></section>
+</main>
+    </body>
+</html>
