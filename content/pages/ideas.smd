@@ -1,0 +1,26 @@
+---
+.title = "Ideas",
+.date = .date("2026-01-01T00:00:00"),
+.layout = "page.shtml",
+.custom = .{ .page_class = "ideas" },
+---
+
+- [15 Jul 2026]($text.attrs('post-date'))
+  [Comptime is funtime: Container-level Mutable State]($link.page('pages/posts/2026-07-15-comptime-is-funtime').attrs('post-title'))
+
+- [08 Jun 2026]($text.attrs('post-date'))
+  [Reading Source Code]($link.page('pages/posts/2026-06-08-read-the-code').attrs('post-title'))
+
+- [03 Aug 2020]($text.attrs('post-date'))
+  [A Computational Mind]($link.page('pages/posts/2020-08-03-a-computational-mind').attrs('post-title'))
+
+- [06 Jul 2019]($text.attrs('post-date'))
+  [Incremental Functional Aggregate Queries]($link.page('pages/posts/2019-07-06-Incremental-Functional-Aggregate-Queries').attrs('post-title'))
+
+- [25 Nov 2018]($text.attrs('post-date'))
+  [Reactive Datalog with Vega]($link.page('pages/posts/2018-11-25-reactive-datalog-with-vega').attrs('post-title'))
+
+
+
+
+

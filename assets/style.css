@@ -1,0 +1,149 @@
+/* Book-like typography inspired by matklad.github.io. */
+@font-face {
+  font-family: "EB Garamond";
+  src: url("/fonts/eb-garamond-latin-400-normal.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "EB Garamond";
+  src: url("/fonts/eb-garamond-latin-400-italic.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "EB Garamond";
+  src: url("/fonts/eb-garamond-latin-700-normal.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "EB Garamond";
+  src: url("/fonts/eb-garamond-latin-700-italic.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Open Sans";
+  src: url("/fonts/open-sans-latin-300-normal.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/jetbrains-mono-latin-400-italic.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/jetbrains-mono-latin-700-normal.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/jetbrains-mono-latin-700-italic.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: light;
+  color: #252525;
+  background: #fff;
+  font-family: "EB Garamond", Georgia, serif;
+  font-size: 22px;
+  line-height: 1.55;
+  -webkit-text-size-adjust: 100%;
+  --accent: #252525;
+  --link: #252525;
+}
+
+* { box-sizing: border-box; }
+body { max-width: 860px; margin: 0 auto; padding: 36px 28px 72px; }
+header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 12px 28px; margin-bottom: 2.5rem; }
+header a { color: #333; text-decoration: none; }
+header a:hover { color: #333; text-decoration: underline; }
+.site-title { font-size: 1.2rem; }
+nav { display: flex; flex-wrap: wrap; gap: 1rem; }
+main { min-width: 0; overflow-wrap: break-word; }
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Open Sans", sans-serif;
+  font-weight: 300;
+  color: var(--accent);
+  line-height: 1.2;
+  text-wrap: balance;
+}
+h1 { font-size: 1.8rem; margin: 0 0 1.25rem; }
+h2, h1.section-title { font-size: 1.45rem; margin: 2rem 0 0.75rem; }
+h3 { font-size: 1.2rem; margin: 1.5rem 0 0.5rem; }
+h4, h5, h6 { font-size: 1rem; }
+article > *, .footnotes { max-width: 65ch; }
+article > pre, article > figure, article > table { max-width: 100%; }
+p, ul, ol, blockquote, figure, table, pre { margin: 0 0 1.25rem; }
+p { text-align: left; }
+ul, ol { padding-left: 1.3rem; }
+li > p { margin-bottom: 0.5rem; }
+a { color: inherit; text-decoration-color: var(--link); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { color: var(--link); }
+a:focus-visible { outline: 2px solid var(--link); outline-offset: 4px; }
+
+pre { overflow-x: auto; padding: 16px 18px; background: #f7f7f6; font-size: 0.72em; line-height: 1.5; }
+code, kbd { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-ligatures: none; font-size: 0.72em; }
+:not(pre) > code { background: #f7f7f6; padding: 0.1em 0.2em; }
+pre code { padding: 0; font-size: 1em; }
+img { max-width: 100%; height: auto; }
+figure { margin-left: 0; margin-right: 0; }
+blockquote { margin-left: 0; padding-left: 1rem; border-left: 2px solid var(--accent); }
+table { display: block; overflow-x: auto; border-collapse: collapse; }
+th, td { padding: 8px 12px; border: 1px solid #dedede; }
+math[display="block"] { display: block; overflow-x: auto; padding: 1rem 0; }
+hr { border: 0; border-top: 1px solid #dedede; margin: 2rem 0 1rem; }
+.footnotes { font-size: 0.85rem; }
+.footnotes:empty { display: none; }
+
+.ideas > ul { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 0.6rem; row-gap: 0.4rem; list-style: none; padding: 0; margin: 0; }
+.ideas li { display: grid; grid-template-columns: subgrid; grid-column: 1 / -1; align-items: baseline; margin: 0; }
+.ideas li > p { display: contents; }
+.ideas .post-date { font-family: inherit; font-weight: 400; font-size: 0.9rem; color: #777; white-space: nowrap; }
+.ideas .post-title { font-family: inherit; font-weight: 400; font-size: 0.9rem; line-height: 1.45; color: var(--accent); text-decoration: none; }
+.ideas .post-title:hover { text-decoration: underline; text-decoration-color: currentColor; }
+.skip-link { position: absolute; left: -10000px; }
+.skip-link:focus { position: static; }
+
+@media (max-width: 540px) {
+  :root { font-size: 19px; line-height: 1.5; }
+  body { padding: 20px 16px 48px; }
+  header { gap: 6px 20px; margin-bottom: 1.75rem; }
+  nav { gap: 1.1rem; }
+  nav a, .site-title { padding: 6px 0; }
+  h1 { font-size: 1.5rem; margin-bottom: 1rem; }
+  h2, h1.section-title { font-size: 1.3rem; margin-top: 1.75rem; }
+  h3 { font-size: 1.1rem; }
+  /* Code blocks and tables run edge to edge so wide lines get the full screen. */
+  article > pre, article > table { margin-left: -16px; margin-right: -16px; max-width: none; }
+  pre { padding: 12px 16px; }
+  blockquote { padding-left: 0.75rem; }
+  /* Ideas list: stack each date above its title. */
+  .ideas > ul { display: block; }
+  .ideas li { display: flex; flex-direction: column; margin-bottom: 0.9rem; }
+  .ideas .post-date { font-size: 0.8rem; }
+  .ideas .post-title { font-size: 1rem; }
+}

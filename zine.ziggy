@@ -1,0 +1,16 @@
+.zine_version = "0.14.1",
+.site = .simple(.{
+    .title = "David Bach",
+    .host_url = "https://david-bach.com",
+    .content_dir_path = "content",
+    .layouts_dir_path = "layouts",
+    .assets_dir_path = "assets",
+    .static_assets = [
+        "CNAME",
+        ".nojekyll",
+        "Temml.woff2",
+        "assets/pages",
+        "vendor/highlight",
+        "fonts",
+    ],
+}),

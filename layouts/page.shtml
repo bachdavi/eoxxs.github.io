@@ -1,0 +1,20 @@
+<extend template="base.shtml">
+<head id="head">
+    <ctx :if="$page.custom.has('plain_code_language')">
+        <script type="module" src="$site.asset('highlight-clojure.js').link()"></script>
+    </ctx>
+</head>
+<main id="main">
+    <article class="$page.custom.getOr('page_class', '')" data-plain-code-language="$page.custom.getOr('plain_code_language', '')" :html="$page.content()"></article>
+    <section class="footnotes" aria-label="Footnotes" :if="$page.footnotes?()">
+        <hr>
+        <ol :loop="$if">
+            <li id="$loop.it.def_id">
+                <ctx :html="$loop.it.html()"></ctx>
+                <ctx :loop="$loop.it.ref_ids">
+                    <a href="$loop.it.prefix('#')" aria-label="Back to reference">↩</a>
+                </ctx>
+            </li>
+        </ol>
+    </section>
+</main>

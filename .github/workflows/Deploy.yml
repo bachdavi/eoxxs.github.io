@@ -2,54 +2,37 @@ name: Build and Deploy
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-    - name: Checkout
-      uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-    # NOTE: Python is necessary for the pre-rendering (minification) step
-    - name: Install python
-      uses: actions/setup-python@v6
-      with:
-        python-version: '3.13'
-    # NOTE: Here you can install dependencies such as matplotlib if you use
-    # packages such as PyPlot.
-    # - run: pip install matplotlib
-    - name: Install Julia
-      uses: julia-actions/setup-julia@v3
-      with:
-        version: '1.12'
-    - name: Cache Julia packages
-      uses: julia-actions/cache@v3
-    # NOTE
-    #   The steps below ensure that NodeJS and Franklin are loaded then it
-    #   installs highlight.js which is needed for the prerendering step
-    #   (code highlighting + katex prerendering).
-    #   Then the environment is activated and instantiated to install all
-    #   Julia packages which may be required to successfully build your site.
-    #   The last line should be `optimize()` though you may want to give it
-    #   specific arguments, see the documentation or ?optimize in the REPL.
-    - name: Install dependencies
-      run: julia --project=. -e '
-            using Pkg; Pkg.instantiate();
-            using NodeJS; run(`$(npm_cmd()) install highlight.js`);'
-    - name: Build site
-      run: julia --project=. -e '
-            using Franklin;
-            optimize()'
-    - name: Build and Deploy
-      uses: JamesIves/github-pages-deploy-action@v4
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        branch: gh-pages
-        folder: __site
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install Zine
+        run: |
+          curl --fail --location --retry 3 \
+            https://github.com/kristoff-it/zine/releases/download/v0.14.1/x86_64-linux-musl.tar.xz \
+            --output "$RUNNER_TEMP/zine.tar.xz"
+          echo "c04c718db69f160716fd6c78154642eb1eab0b842e72d80ea05765340d5c9dbe  $RUNNER_TEMP/zine.tar.xz" | sha256sum --check
+          mkdir -p "$RUNNER_TEMP/zine"
+          tar -xJf "$RUNNER_TEMP/zine.tar.xz" -C "$RUNNER_TEMP/zine"
+          echo "$RUNNER_TEMP/zine" >> "$GITHUB_PATH"
+      - name: Build site
+        run: zine release
+      - name: Deploy
+        if: github.event_name != 'pull_request'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: gh-pages
+          folder: public

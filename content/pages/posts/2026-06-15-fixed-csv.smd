@@ -1,0 +1,173 @@
+---
+.title = "Comptime is funtime",
+.date = .date("2026-06-15T00:00:00"),
+.layout = "page.shtml",
+---
+
+# Comptime is fun time
+
+For a recent project we had to write a columnar CSV parser with a
+fixed schema and decided to use Zig for this.
+
+The CSV files we were supposed to read were all with a set of
+compile-time known schemas, about 13 different ones. After parsing we
+needed to efficiently access the records in a columnar way. We could
+not use a columnar format like Arrow, we had to read CSV files.
+
+## Schema
+
+We decided to use `MultiArrayList` to represent slices of records in a
+columnar way. In our case some of the data we dealt with encoded
+linear constraints we passed to solvers like HiGHs or Gurobi.
+
+```zig
+
+// Each row is in COO (coordinate list).
+const SparseMatrixRow = struct {
+    row: u64,
+    col: u64,
+    value: f64,
+};
+
+const SparseMatrix = MultiArrayList(SparseMatrixRow);
+```
+
+The record type is our schema. We want to compile a specialized reader
+for this particular schema, parsing CSV records and returning or
+filling a `MultiArrayList`.
+
+We want to support a subset of primitive types in Zig, notably also
+optionals.
+
+## Tokenizer
+
+We implement a simple tokenizer (heavily inspired by the Zig languages
+compiler tokenizer).
+
+```zig
+
+const Tokenizer = struct {
+    buffer: [:0]const u8,
+    index: usize,
+
+    // Each token has a tag and a location in the source.
+    const Token = struct {
+        tag: Tag,
+        loc: Loc,
+
+        // Index points into the source where the value of this token
+        // starts.
+        const Loc = struct {
+            start: usize,
+            end: usize,
+        };
+
+        // Kind of token.
+        const Tag = enum {
+            field,
+            delimiter,
+            clrf,
+            invalid,
+            eof,
+        };
+    };
+```
+
+The tokznier contains a zero-terminated slice, the CSV file we are
+reading, and it produces tokens. Each token points to some data in the
+buffer and has a tag. When looking at
+[rfc4180](https://www.rfc-editor.org/rfc/rfc4180.html) we know that a
+valid CSV file does not have so many different tokens.
+
+The tokenizer reads each byte from the source and we have a simple
+state machine to decide what kind of token we are dealing with:
+
+```zig
+    // State of the tokenizer.
+    const State = enum {
+        start,
+        eof,
+        quote,
+        field,
+        delimiter,
+        clrf,
+        invalid,
+    };
+
+    // Produce the next token.
+    pub fn next(self: *Tokenizer) Token {
+        var result: Token = .{
+            .tag = .field,
+            .loc = .{ .start = self.index, .end = undefined },
+        };
+
+        state: switch (State.start) {
+            .start => {
+                switch (self.buffer[self.index]) {
+                    '"' => {
+                        // Quoted fields should not contain the quote
+                        // itself.
+                        result.loc.start = self.index + 1;
+                        continue :state .quote;
+                    },
+                    // ... other cases ...
+            },
+            // ... other states ...
+        }
+        return result;
+};
+```
+We read on byte after the other and use Zigs new `continue :state` to
+do a state transition. The statemachine encodes the CSV syntax. The
+only way for us to go into the `.invalid` state is when a plain `.field`
+contains a quote. That is not allowed. 
+
+## Reader
+
+Now the reader is a generic type specialized for the record type. 
+
+```zig
+
+///  A ReaderType parses CSVs and returns a MultiArrayList of records.
+pub fn ReaderType(comptime Record: type) type {
+    return struct {
+        inner: *Io.Reader,
+
+        const Reader = @This();
+        const RecordList = std.MultiArrayList(Record);
+        // ... implementation ...
+        
+        /// Parses a row into the Record struct.
+        fn parseRecord(tokenizer: *Tokenizer, source: []const u8) !?Record {
+        }
+```
+
+`parseRecord` is where the comptime starts. From the provided record
+type we statically know how many fields we expect and what types. We
+can use `comptime` to unroll the parsing loop, creating an optimal but
+also maintainable functionality.
+
+```zig
+/// Parses a row into the Record struct.
+fn parseRecord(tokenizer: *Tokenizer, source: []const u8) !?Record {
+    var record: Record = undefined;
+    const columns = @typeInfo(Record).@"struct".fields;
+    inline for (columns, 0..) |column, idx| {
+        const token = tokenizer.next();
+        switch (token.tag) {
+            .eof => return null,
+            .field => {
+                
+            },
+        }
+    }
+```
+
+The `inline for` instruct the compiler to unroll this loop at compile
+time. If 
+
+
+
+
+
+

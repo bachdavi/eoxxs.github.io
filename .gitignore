@@ -2,3 +2,7 @@ __site/
 .DS_Store
 node_modules/
 package-lock.json
+public/
+.zig-cache/
+zig-out/
+.zine-cache/
