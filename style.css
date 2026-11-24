@@ -28,13 +28,6 @@
   font-display: swap;
 }
 @font-face {
-  font-family: "Open Sans";
-  src: url("/fonts/open-sans-latin-300-normal.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 300;
-  font-display: swap;
-}
-@font-face {
   font-family: "JetBrains Mono";
   src: url("/fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2");
   font-style: normal;
@@ -63,6 +56,14 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Source Sans 3";
+  src: url("/fonts/source-sans-3-latin-300-normal.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+}
+
 :root {
   color-scheme: light;
   color: #252525;
@@ -77,7 +78,7 @@
 
 * { box-sizing: border-box; }
 body { max-width: 860px; margin: 0 auto; padding: 36px 28px 72px; }
-header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 12px 28px; margin-bottom: 2.5rem; }
+header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 12px 28px; max-width: 65ch; margin-bottom: 2.5rem; }
 header a { color: #333; text-decoration: none; }
 header a:hover { color: #333; text-decoration: underline; }
 .site-title { font-size: 1.2rem; }
@@ -85,7 +86,7 @@ nav { display: flex; flex-wrap: wrap; gap: 1rem; }
 main { min-width: 0; overflow-wrap: break-word; }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: "Open Sans", sans-serif;
+  font-family: "Source Sans 3", sans-serif;
   font-weight: 300;
   color: var(--accent);
   line-height: 1.2;
